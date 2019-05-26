@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1>Онлайн-заказ блюд</h1>
+                <div id="top_menu">
+                    <p>Подождите, идет загрузка...</p>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                      </div>
+                </div>
+                <div class="" id="content">
+
+                </div>
+                <h2>Ваш заказ:</h2>
+                <div id="selected"></div>
+                <div class="alert alert-success">Общая цена: <span id="total_price" style="font-size:120%">0</span> сум.</div>
+                <button class="btn btn-warning clear_selected">Очистить</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $("#top_menu").on('click', '.category', function(){
+                $cat_id = $(this).attr('data-id');
+                
+                $.get(
+                    '/menu/get/'+$cat_id,
+                    function(data){
+                        $("#content").html("<br><ul class='list-group'><h5>Выберите блюдо:</h5></ul>");
+                        data.forEach(element => {
+                            $("#content ul").append("<a href='#' class='food list-group-item list-group-item-action' data-price='"+element.price+"' data-id='"+element.id+"'>"+element.name+" ("+element.price+" сум)</a>");
+                        });
+                    },
+                    'json'
+                );
+            });
+            $(".clear_selected").click(function(){
+				$.post(
+					'/order/clear',
+					{user_id : 1},
+					function(data){
+						$("#selected").text("");
+					}
+				);
+            });
+
+            $("#content").on('click', '.food', function(){
+                $food_id = $(this).attr('data-id');
+                $price = parseInt($("#total_price").text());
+                $price += parseInt($(this).attr('data-price'));
+                $("#total_price").text($price);
+                var data = {
+                    'menu_id' : $food_id,
+                    'qty' : 1,
+                };
+                $.post('/order/add', data);
+                $("#selected").append("<li class='badge badge-primary'>"+$(this).text()+"</li> ");
+                return false;
+            });
+
+            $.get(
+                '/menu/index', //url
+                function(data){
+                    $("#top_menu").text("");
+                    data.forEach(element => {
+                        $("#top_menu").append("<button type='button' data-id='"+element.id+"' class='btn btn-info category'>"+element.name+"</button> ");
+                    });
+                },
+                'json' //content type
+            );
+        });
+    </script>
+</body>
+</html>
